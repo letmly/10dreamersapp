@@ -257,13 +257,10 @@ export default function RouteDetailPage() {
       </div>
 
       {/* Кнопка "Начать путешествие" */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t safe-bottom p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t safe-bottom p-4 z-30">
         <div className="max-w-4xl mx-auto">
           <button
-            onClick={() => {
-              // TODO: Запустить активный маршрут
-              alert('Функция "Начать путешествие" будет добавлена позже!')
-            }}
+            onClick={() => router.push(`/journey/${route.id}`)}
             className="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all shadow-lg"
           >
             🚀 Начать путешествие
