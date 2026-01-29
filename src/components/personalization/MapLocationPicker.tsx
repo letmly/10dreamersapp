@@ -122,9 +122,9 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Инструкция */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
         <p className="font-medium mb-1">📍 Выберите точку старта</p>
         <p className="text-blue-700">
           {geoError
@@ -141,7 +141,7 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
 
       {/* Выбранная локация */}
       {selectedLocation && (
-        <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 text-sm">
+        <div className="bg-green-50 border-2 border-green-300 rounded-lg p-2 text-sm">
           <div className="font-medium text-green-900 flex items-center gap-2">
             ✅ Точка старта выбрана:
           </div>
@@ -153,7 +153,7 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
 
       {/* Подсказка если не выбрана точка */}
       {!selectedLocation && (
-        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-3 text-sm text-gray-600 text-center">
+        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-2 text-sm text-gray-600 text-center">
           👆 Кликните на карте ниже, чтобы выбрать точку старта
         </div>
       )}
@@ -162,7 +162,7 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
       <div className="relative">
         <div
           ref={mapContainerRef}
-          className="w-full h-[500px] sm:h-[600px] rounded-xl overflow-hidden shadow-lg border-2 border-gray-200"
+          className="w-full h-[50vh] min-h-[400px] max-h-[600px] rounded-xl overflow-hidden shadow-lg border-2 border-gray-200"
         />
 
         {/* Кнопка "Моя позиция" - показываем только если геолокация работает */}
