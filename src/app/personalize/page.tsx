@@ -143,7 +143,7 @@ export default function PersonalizationPage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-4 py-8 pb-32">
+      <main className={`max-w-2xl mx-auto px-4 py-8 ${step.type === 'map' ? 'pb-40' : 'pb-32'}`}>
         {/* Заголовок шага */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{step.question}</h1>
@@ -153,7 +153,7 @@ export default function PersonalizationPage() {
         </div>
 
         {/* Контент шага */}
-        <div className="mb-8">
+        <div className={step.type === 'map' ? 'mb-0' : 'mb-8'}>
           {step.type === 'single' && step.options && (
             <BubbleSelector
               options={step.options}

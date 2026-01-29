@@ -162,7 +162,7 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
       <div className="relative">
         <div
           ref={mapContainerRef}
-          className="w-full h-[400px] rounded-xl overflow-hidden shadow-lg border-2 border-gray-200"
+          className="w-full h-[500px] sm:h-[600px] rounded-xl overflow-hidden shadow-lg border-2 border-gray-200"
         />
 
         {/* Кнопка "Моя позиция" - показываем только если геолокация работает */}
