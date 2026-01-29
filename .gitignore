@@ -36,8 +36,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# logs
-/logs
+# logs (ignore log files but keep directory structure)
+/logs/*
+!logs/README.md
+!logs/.gitkeep
 *.log
 
 # IDE
