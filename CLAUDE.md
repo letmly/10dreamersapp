@@ -15,19 +15,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
+**ВАЖНО: Проект использует pnpm, а не npm или yarn.**
+
 ### Core Commands
 ```bash
-npm install              # Установка зависимостей
-npm run dev             # Запуск dev сервера (localhost:3000)
-npm run build           # Сборка production версии
-npm start               # Запуск production версии
+pnpm install            # Установка зависимостей
+pnpm dev                # Запуск dev сервера (localhost:3000)
+pnpm build              # Сборка production версии
+pnpm start              # Запуск production версии
 ```
 
 ### Code Quality
 ```bash
-npm run lint            # Проверка кода с ESLint
-npm run type-check      # Проверка TypeScript типов без компиляции
-npm run format          # Форматирование кода с Prettier
+pnpm lint               # Проверка кода с ESLint
+pnpm type-check         # Проверка TypeScript типов без компиляции
+pnpm format             # Форматирование кода с Prettier
 ```
 
 ## Architecture
@@ -86,6 +88,12 @@ src/
 - `isNearby` проверяет, находится ли пользователь рядом с местом (100м)
 
 ## Important Notes
+
+### Package Manager
+- **Всегда используй pnpm** для установки зависимостей и запуска скриптов
+- Не используй npm или yarn - это может привести к конфликтам
+- Если нужно добавить зависимость: `pnpm add <package>`
+- Для dev зависимостей: `pnpm add -D <package>`
 
 ### Code Style
 - Используй TypeScript строго (strict mode включен)

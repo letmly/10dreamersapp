@@ -12,16 +12,18 @@
 
 ## Начало работы
 
+**Требования:** Node.js 18+ и pnpm 8+
+
 ### Установка зависимостей
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Запуск dev сервера
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Приложение будет доступно по адресу [http://localhost:3000](http://localhost:3000)
@@ -29,18 +31,18 @@ npm run dev
 ### Сборка для продакшена
 
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 ## Доступные команды
 
-- `npm run dev` - запуск dev сервера
-- `npm run build` - сборка для продакшена
-- `npm start` - запуск продакшен версии
-- `npm run lint` - проверка кода ESLint
-- `npm run type-check` - проверка типов TypeScript
-- `npm run format` - форматирование кода с Prettier
+- `pnpm dev` - запуск dev сервера
+- `pnpm build` - сборка для продакшена
+- `pnpm start` - запуск продакшен версии
+- `pnpm lint` - проверка кода ESLint
+- `pnpm type-check` - проверка типов TypeScript
+- `pnpm format` - форматирование кода с Prettier
 
 ## Структура проекта
 
