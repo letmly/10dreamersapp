@@ -29,8 +29,31 @@ export async function POST(request: NextRequest) {
     // Генерация промпта
     const systemPrompt = buildSystemPrompt(context)
 
+    // Логирование промпта
+    console.log('=== GEMINI PROMPT ===')
+    console.log(systemPrompt)
+    console.log('=== END PROMPT ===\n')
+
     // Вызов Gemini API
     const generatedRoute = await callGeminiAPI(systemPrompt)
+
+    // Логирование ответа
+    console.log('=== GEMINI RESPONSE ===')
+    console.log(JSON.stringify(generatedRoute, null, 2))
+    console.log('=== END RESPONSE ===\n')
+
+    // Валидация и исправление
+    if (generatedRoute.route) {
+      const actualPoints = generatedRoute.route.points?.length || 0
+
+      // Исправляем total_points если не совпадает
+      if (generatedRoute.route.statistics && generatedRoute.route.statistics.total_points !== actualPoints) {
+        console.warn(`⚠️ Fixing total_points: ${generatedRoute.route.statistics.total_points} -> ${actualPoints}`)
+        generatedRoute.route.statistics.total_points = actualPoints
+      }
+
+      console.log(`✅ Route validated: ${actualPoints} points, ${generatedRoute.route.statistics?.total_distance}km`)
+    }
 
     // Возвращаем результат
     return NextResponse.json(generatedRoute, { status: 200 })

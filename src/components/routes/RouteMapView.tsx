@@ -85,5 +85,5 @@ export default function RouteMapView({ route }: RouteMapViewProps) {
     }
   }, [route])
 
-  return <div ref={mapContainerRef} className="w-full h-[400px] md:h-[500px]" />
+  return <div ref={mapContainerRef} className="w-full h-[50vh] min-h-[300px] max-h-[500px]" />
 }
