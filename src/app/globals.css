@@ -59,4 +59,34 @@
   .safe-right {
     padding-right: env(safe-area-inset-right);
   }
+
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Leaflet custom styles */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+
+.custom-marker,
+.user-marker {
+  background: transparent;
+  border: none;
 }

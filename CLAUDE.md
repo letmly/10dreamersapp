@@ -41,9 +41,14 @@ src/
 ├── app/              # Next.js App Router
 │   ├── layout.tsx    # Root layout с метаданными для PWA
 │   ├── globals.css   # Глобальные стили, утилиты для mobile (safe-area)
-│   └── page.tsx      # Главная страница
-├── components/       # React компоненты (пока пусто, будут добавляться)
-├── hooks/           # Custom hooks
+│   ├── page.tsx      # Главная страница
+│   └── map/          # Страница карты (точка входа для путешествия)
+│       ├── layout.tsx
+│       └── page.tsx
+├── components/
+│   └── map/
+│       └── MapView.tsx  # Компонент интерактивной карты (Leaflet)
+├── hooks/
 │   └── useGeolocation.ts  # Hook для работы с геолокацией
 ├── lib/
 │   ├── mockData.ts   # Mock данные для places, quests, badges
@@ -87,6 +92,14 @@ src/
 - `calculateDistance` использует формулу Haversine для точности
 - `isNearby` проверяет, находится ли пользователь рядом с местом (100м)
 
+**Map Integration:**
+- Используется Leaflet через динамический импорт (`next/dynamic`) с `ssr: false`
+- `MapView` компонент управляет картой и маркерами
+- Карта показывает достопримечательности с emoji-иконками по категориям
+- При клике на маркер открывается bottomsheet с деталями места
+- Кнопка "Моя позиция" центрирует карту на пользователе
+- OpenStreetMap используется как источник тайлов
+
 ## Important Notes
 
 ### Package Manager
@@ -106,6 +119,14 @@ src/
 - Используй Tailwind утилиты: `safe-top`, `safe-bottom` для safe areas
 - Кнопки должны иметь `active:scale-95` для touch feedback
 - Input поля должны быть минимум 44x44px для touch targets
+- Bottomsheet компоненты используют `animate-slide-up` класс
+
+### Leaflet/Map Development
+- Leaflet требует динамического импорта с `ssr: false`
+- Карта инициализируется один раз в useEffect с cleanup
+- Маркеры обновляются через refs для избежания пересоздания карты
+- Используй L.divIcon для кастомных emoji маркеров
+- Z-index: карта = 0, UI элементы > 10, bottomsheet = 20
 
 ### State Management
 - Для локального состояния используй `useState`/`useReducer`
