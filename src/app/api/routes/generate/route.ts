@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { GenerateRouteRequest, GeneratedRouteResponse } from '@/types/personalization'
 import { buildSystemPrompt } from '@/lib/gemini/systemPrompt'
 import { mockPlaces } from '@/lib/mockData'
+import { logGeminiInteraction, logGeminiError } from '@/lib/logger'
 
 /**
  * POST /api/routes/generate
@@ -29,18 +30,8 @@ export async function POST(request: NextRequest) {
     // Генерация промпта
     const systemPrompt = buildSystemPrompt(context)
 
-    // Логирование промпта
-    console.log('=== GEMINI PROMPT ===')
-    console.log(systemPrompt)
-    console.log('=== END PROMPT ===\n')
-
     // Вызов Gemini API
     const generatedRoute = await callGeminiAPI(systemPrompt)
-
-    // Логирование ответа
-    console.log('=== GEMINI RESPONSE ===')
-    console.log(JSON.stringify(generatedRoute, null, 2))
-    console.log('=== END RESPONSE ===\n')
 
     // Валидация и исправление
     if (generatedRoute.route) {
@@ -55,10 +46,23 @@ export async function POST(request: NextRequest) {
       console.log(`✅ Route validated: ${actualPoints} points, ${generatedRoute.route.statistics?.total_distance}km`)
     }
 
+    // Логирование в файлы
+    const sessionId = logGeminiInteraction(systemPrompt, generatedRoute)
+    console.log(`📝 Session logged: ${sessionId}`)
+
     // Возвращаем результат
     return NextResponse.json(generatedRoute, { status: 200 })
   } catch (error) {
     console.error('Error generating route:', error)
+
+    // Логируем ошибку если есть промпт
+    try {
+      const systemPrompt = buildSystemPrompt(context)
+      logGeminiError(systemPrompt, error instanceof Error ? error : new Error(String(error)))
+    } catch (logError) {
+      console.error('Failed to log error:', logError)
+    }
+
     return NextResponse.json(
       { error: 'Failed to generate route', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
