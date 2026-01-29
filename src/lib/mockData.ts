@@ -123,5 +123,31 @@ export const mockRoutes: Route[] = [
     distance: 3.5,
     estimatedTime: 180,
     difficulty: 'easy',
+    transportMode: 'walking',
+    color: '#10b981',
+    polyline: {
+      coordinates: [
+        mockPlaces[0].coordinates,
+        { lat: 59.9450, lng: 30.3150 }, // Промежуточная точка
+        mockPlaces[1].coordinates,
+      ],
+      segments: [
+        {
+          startPlaceId: mockPlaces[0].id,
+          endPlaceId: mockPlaces[1].id,
+          distance: 3.5,
+          duration: 180,
+          transportMode: 'walking',
+          polyline: [
+            mockPlaces[0].coordinates,
+            { lat: 59.9450, lng: 30.3150 },
+            mockPlaces[1].coordinates,
+          ],
+        },
+      ],
+    },
+    startPoint: mockPlaces[0],
+    endPoint: mockPlaces[1],
+    isActive: false,
   },
 ]

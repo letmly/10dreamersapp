@@ -100,6 +100,50 @@ src/
 - Кнопка "Моя позиция" центрирует карту на пользователе
 - OpenStreetMap используется как источник тайлов
 
+**Routing System (src/lib/routing.ts):**
+
+Параметры для построения маршрута:
+1. **RouteOptions** - настройки маршрута:
+   - `transportMode` - способ передвижения (walking/cycling/driving/transit)
+   - `startLocation` - начальная точка (обычно текущая позиция пользователя)
+   - `endLocation` - конечная точка
+   - `optimize` - оптимизировать порядок точек (TSP алгоритм)
+   - `avoidTolls`, `avoidHighways` - ограничения
+
+2. **RoutePolyline** - линия маршрута на карте:
+   - `coordinates` - массив точек { lat, lng } для отрисовки линии
+   - `segments` - сегменты между точками с детальной информацией
+
+3. **RouteSegment** - участок маршрута между двумя точками:
+   - `startPlaceId`, `endPlaceId` - ID начальной и конечной точки
+   - `distance` - расстояние в км
+   - `duration` - время в минутах
+   - `transportMode` - способ передвижения
+   - `instructions` - пошаговые инструкции навигации
+   - `polyline` - координаты сегмента
+
+4. **ActiveRoute** - активный маршрут пользователя:
+   - `currentPlaceIndex` - текущая точка маршрута
+   - `visitedPlaces` - посещенные места (ID)
+   - `progress` - прогресс 0-100%
+   - `startedAt`, `completedAt` - временные метки
+
+Основные функции:
+- `createRoute(places, options, metadata)` - создает маршрут из мест
+- `calculateSimpleRoute(places, options)` - строит полилинию (пока прямые линии)
+- `optimizeRouteOrder(places, startLocation)` - оптимизирует порядок (жадный алгоритм)
+- `isOnRoute(lat, lng, route)` - проверяет, на маршруте ли пользователь
+- `findNearestPlaceOnRoute(lat, lng, route)` - находит ближайшую точку
+- `calculateRouteProgress(route, index, visited)` - вычисляет прогресс
+
+**Важно для продакшена:**
+- Сейчас используются прямые линии между точками
+- Для продакшена интегрировать реальный routing API:
+  - OSRM (Open Source Routing Machine) - бесплатно
+  - Google Directions API - платно, точнее
+  - Mapbox Directions API - платно, хорошая документация
+  - GraphHopper - open-source альтернатива
+
 ## Important Notes
 
 ### Package Manager

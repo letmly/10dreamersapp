@@ -124,8 +124,60 @@ export interface Route {
   id: string
   name: string
   description: string
-  places: Place[]
-  distance: number // в км
-  estimatedTime: number // в минутах
+  places: Place[] // Точки маршрута в порядке посещения
+  distance: number // в км (общая длина маршрута)
+  estimatedTime: number // в минутах (время прохождения)
   difficulty: 'easy' | 'medium' | 'hard'
+  polyline?: RoutePolyline // Линия маршрута для отрисовки
+  transportMode?: TransportMode // Способ передвижения
+  isActive?: boolean // Активен ли маршрут сейчас
+  color?: string // Цвет линии маршрута на карте
+  startPoint?: Place // Начальная точка (если не первая в places)
+  endPoint?: Place // Конечная точка (если не последняя в places)
+}
+
+// Полилиния маршрута (координаты для отрисовки на карте)
+export interface RoutePolyline {
+  coordinates: Array<{ lat: number; lng: number }> // Точки линии маршрута
+  segments?: RouteSegment[] // Сегменты между точками с детальной информацией
+}
+
+// Сегмент маршрута (участок между двумя точками)
+export interface RouteSegment {
+  startPlaceId: string
+  endPlaceId: string
+  distance: number // в км
+  duration: number // в минутах
+  transportMode: TransportMode
+  instructions?: string[] // Пошаговые инструкции (повороты, улицы)
+  polyline: Array<{ lat: number; lng: number }> // Координаты этого сегмента
+}
+
+// Способ передвижения
+export type TransportMode = 'walking' | 'driving' | 'transit' | 'cycling'
+
+// Настройки построения маршрута
+export interface RouteOptions {
+  transportMode: TransportMode
+  avoidTolls?: boolean // Избегать платных дорог
+  avoidHighways?: boolean // Избегать магистралей
+  optimize?: boolean // Оптимизировать порядок точек
+  startLocation?: { lat: number; lng: number } // Начальная точка (или текущая позиция)
+  endLocation?: { lat: number; lng: number } // Конечная точка
+}
+
+// Запрос на построение маршрута
+export interface RouteRequest {
+  places: Place[] // Места для посещения
+  options: RouteOptions
+}
+
+// Активный маршрут пользователя
+export interface ActiveRoute {
+  route: Route
+  currentPlaceIndex: number // Текущая точка маршрута (индекс в route.places)
+  visitedPlaces: string[] // ID посещенных мест
+  startedAt: Date
+  completedAt?: Date
+  progress: number // Прогресс в процентах (0-100)
 }
