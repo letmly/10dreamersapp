@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import type { GenerateRouteRequest, GeneratedRouteResponse } from '@/types/personalization'
 import { buildSystemPrompt } from '@/lib/gemini/systemPrompt'
 import { mockPlaces } from '@/lib/mockData'
@@ -52,61 +53,50 @@ async function callGeminiAPI(prompt: string): Promise<GeneratedRouteResponse> {
     throw new Error('GEMINI_API_KEY not configured')
   }
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.8,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
-        },
-      }),
-    }
-  )
+  // Инициализация Google Generative AI
+  const genAI = new GoogleGenerativeAI(apiKey)
 
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Gemini API error: ${error}`)
-  }
-
-  const data = await response.json()
-
-  // Извлекаем текст ответа
-  const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-  if (!generatedText) {
-    throw new Error('No response from Gemini API')
-  }
-
-  // Парсим JSON из ответа
-  // Gemini может вернуть markdown с ```json, нужно его убрать
-  const cleanedText = generatedText
-    .replace(/```json\n/g, '')
-    .replace(/```\n/g, '')
-    .replace(/```/g, '')
-    .trim()
+  // Получение модели
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    generationConfig: {
+      temperature: 0.8,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 8192,
+    },
+  })
 
   try {
-    const parsedRoute = JSON.parse(cleanedText)
-    return parsedRoute
-  } catch (parseError) {
-    console.error('Failed to parse Gemini response:', cleanedText)
-    throw new Error('Invalid JSON response from Gemini')
+    // Генерация контента
+    const result = await model.generateContent(prompt)
+    const response = result.response
+    const generatedText = response.text()
+
+    if (!generatedText) {
+      throw new Error('No response from Gemini API')
+    }
+
+    console.log('Gemini raw response:', generatedText.substring(0, 500))
+
+    // Парсим JSON из ответа
+    // Gemini может вернуть markdown с ```json, нужно его убрать
+    const cleanedText = generatedText
+      .replace(/```json\n/g, '')
+      .replace(/```\n/g, '')
+      .replace(/```/g, '')
+      .trim()
+
+    try {
+      const parsedRoute = JSON.parse(cleanedText)
+      return parsedRoute
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', cleanedText)
+      throw new Error('Invalid JSON response from Gemini')
+    }
+  } catch (error) {
+    console.error('Gemini API error:', error)
+    throw new Error(`Gemini API error: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
