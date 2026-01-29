@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import type { GenerateRouteRequest, GeneratedRouteResponse } from '@/types/personalization'
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
+import type { GenerateRouteRequest } from '@/types/personalization'
 import { buildSystemPrompt } from '@/lib/gemini/systemPrompt'
 import { mockPlaces } from '@/lib/mockData'
-import { logGeminiInteraction, logGeminiError } from '@/lib/logger'
+import { logGeminiPrompt, logGeminiResponse, logGeminiError } from '@/lib/logger'
+import { generatedRouteResponseSchema } from '@/lib/gemini/routeSchema'
 
 /**
  * POST /api/routes/generate
@@ -21,17 +22,19 @@ export async function POST(request: NextRequest) {
     // Подготовка контекста для Gemini
     const context = {
       answers: body.answers,
-      available_places: mockPlaces, // В продакшене загрузить из БД
-      current_events: [], // TODO: Загрузить текущие события
-      weather: await getCurrentWeather(), // TODO: Интеграция с weather API
+      current_events: [], // TODO: Загрузить текущие события для конкретного города
+      weather: await getCurrentWeather(), // TODO: Интеграция с weather API по координатам
       time_of_day: getTimeOfDay(),
     }
 
     // Генерация промпта
     const systemPrompt = buildSystemPrompt(context)
 
-    // Вызов Gemini API
-    const generatedRoute = await callGeminiAPI(systemPrompt)
+    // СРАЗУ логируем промпт (до запроса к API)
+    const sessionId = logGeminiPrompt(systemPrompt)
+
+    // Вызов Gemini API с structured output
+    const generatedRoute = await callGeminiAPI(systemPrompt, sessionId)
 
     // Валидация и исправление
     if (generatedRoute.route) {
@@ -45,10 +48,6 @@ export async function POST(request: NextRequest) {
 
       console.log(`✅ Route validated: ${actualPoints} points, ${generatedRoute.route.statistics?.total_distance}km`)
     }
-
-    // Логирование в файлы
-    const sessionId = logGeminiInteraction(systemPrompt, generatedRoute)
-    console.log(`📝 Session logged: ${sessionId}`)
 
     // Возвращаем результат
     return NextResponse.json(generatedRoute, { status: 200 })

@@ -13,9 +13,9 @@ if (!fs.existsSync(LOGS_DIR)) {
 }
 
 /**
- * Логирует промпт и ответ в отдельные файлы
+ * Логирует только промпт (вызывается ДО запроса к API)
  */
-export function logGeminiInteraction(prompt: string, response: any) {
+export function logGeminiPrompt(prompt: string) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const sessionId = `session-${timestamp}`
 
@@ -23,6 +23,15 @@ export function logGeminiInteraction(prompt: string, response: any) {
   const promptFile = path.join(LOGS_DIR, `${sessionId}-prompt.txt`)
   fs.writeFileSync(promptFile, prompt, 'utf-8')
 
+  console.log(`📝 Prompt logged: logs/${sessionId}-prompt.txt`)
+
+  return sessionId
+}
+
+/**
+ * Логирует ответ для существующей сессии
+ */
+export function logGeminiResponse(sessionId: string, response: any) {
   // Файл с ответом
   const responseFile = path.join(LOGS_DIR, `${sessionId}-response.json`)
   fs.writeFileSync(responseFile, JSON.stringify(response, null, 2), 'utf-8')
@@ -51,8 +60,15 @@ Success: ${response.route ? 'YES' : 'NO'}
 
   fs.writeFileSync(summaryFile, summary, 'utf-8')
 
-  console.log(`📝 Logged to: logs/${sessionId}-*`)
+  console.log(`✅ Response logged: logs/${sessionId}-response.json`)
+}
 
+/**
+ * Логирует промпт и ответ вместе (для обратной совместимости)
+ */
+export function logGeminiInteraction(prompt: string, response: any) {
+  const sessionId = logGeminiPrompt(prompt)
+  logGeminiResponse(sessionId, response)
   return sessionId
 }
 

@@ -163,8 +163,7 @@ export interface RouteStatistics {
 // Промпт для Gemini API
 export interface GeminiPromptContext {
   answers: PersonalizationAnswers
-  available_places: any[]  // Список всех доступных мест в городе
-  current_events?: any[]   // Текущие события и мероприятия
+  current_events?: any[]   // Текущие события и мероприятия в городе пользователя
   weather?: {
     temperature: number
     condition: string
