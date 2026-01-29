@@ -144,6 +144,30 @@ src/
   - Mapbox Directions API - платно, хорошая документация
   - GraphHopper - open-source альтернатива
 
+**Personalization Pipeline:**
+- `/personalize` страница - квиз для персонализации маршрута
+- Bubble-based UI для выбора опций (время, бюджет, vibe, еда, состояние)
+- MapLocationPicker для выбора точки старта на карте
+- POST /api/routes/generate - генерация через Gemini API
+- Системный промпт в `src/lib/gemini/systemPrompt.ts`
+- Типы персонализации в `src/types/personalization.ts`
+
+Параметры персонализации:
+- `timeAvailable` - сколько времени на прогулку (30min-fullday)
+- `budget` - бюджет (free/budget/moderate/premium)
+- `vibes` - интересы (history, art, nature, food и тд) - до 3-х
+- `foodPreferences` - предпочтения в еде - до 3-х
+- `mentalState` - текущее состояние (energetic/relaxed/curious/social/contemplative/adventurous)
+- `openToEvents` - готов ли посетить мероприятие (yes/no/maybe)
+- `startLocation` - точка старта с lat/lng
+
+Gemini генерирует JSON с:
+- Точками маршрута (name, description, coordinates, duration)
+- Квизами для каждой точки (3-5 вопросов с вариантами ответов)
+- Переходами между точками (метод, время, расстояние, инструкции)
+- Статистикой (время, расстояние, стоимость, калории)
+- Персонализацией (score, reasoning)
+
 ## Important Notes
 
 ### Package Manager
