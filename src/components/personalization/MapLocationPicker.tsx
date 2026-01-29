@@ -127,17 +127,34 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
         <p className="font-medium mb-1">📍 Выберите точку старта</p>
         <p className="text-blue-700">
-          Нажмите на карте, чтобы выбрать место, откуда хотите начать путешествие
+          {geoError
+            ? '👆 Кликните на карте в нужном месте, чтобы выбрать точку старта'
+            : 'Нажмите на карте, чтобы выбрать место, откуда хотите начать путешествие'
+          }
         </p>
+        {geoError && (
+          <p className="text-yellow-700 mt-2 text-xs">
+            ⚠️ Геолокация недоступна - выберите точку вручную
+          </p>
+        )}
       </div>
 
       {/* Выбранная локация */}
       {selectedLocation && (
-        <div className="bg-white border rounded-lg p-3 text-sm">
-          <div className="font-medium text-gray-900">Точка старта:</div>
-          <div className="text-gray-600">
+        <div className="bg-green-50 border-2 border-green-300 rounded-lg p-3 text-sm">
+          <div className="font-medium text-green-900 flex items-center gap-2">
+            ✅ Точка старта выбрана:
+          </div>
+          <div className="text-green-700 mt-1">
             {selectedLocation.address || `${selectedLocation.lat.toFixed(4)}, ${selectedLocation.lng.toFixed(4)}`}
           </div>
+        </div>
+      )}
+
+      {/* Подсказка если не выбрана точка */}
+      {!selectedLocation && (
+        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-3 text-sm text-gray-600 text-center">
+          👆 Кликните на карте ниже, чтобы выбрать точку старта
         </div>
       )}
 
@@ -145,23 +162,25 @@ export default function MapLocationPicker({ value, onChange }: MapLocationPicker
       <div className="relative">
         <div
           ref={mapContainerRef}
-          className="w-full h-[400px] rounded-xl overflow-hidden shadow-lg"
+          className="w-full h-[400px] rounded-xl overflow-hidden shadow-lg border-2 border-gray-200"
         />
 
-        {/* Кнопка "Моя позиция" */}
-        {latitude && longitude && (
+        {/* Кнопка "Моя позиция" - показываем только если геолокация работает */}
+        {latitude && longitude && !geoError && (
           <button
             onClick={handleMyLocation}
-            className="absolute top-4 right-4 bg-white px-4 py-2 rounded-lg shadow-md border border-gray-200 hover:bg-gray-50 active:scale-95 transition-transform text-sm font-medium z-[1000]"
+            className="absolute top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 active:scale-95 transition-all text-sm font-medium z-[1000]"
           >
             📍 Моя позиция
           </button>
         )}
 
-        {/* Ошибка геолокации */}
-        {geoError && (
-          <div className="absolute bottom-4 left-4 right-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-900 z-[1000]">
-            Не удалось получить вашу позицию. Выберите точку старта вручную.
+        {/* Подсказка поверх карты если точка не выбрана */}
+        {!selectedLocation && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-[500]">
+            <div className="bg-black/70 text-white px-6 py-3 rounded-full text-sm font-medium shadow-xl">
+              👆 Кликните на карте
+            </div>
           </div>
         )}
       </div>
