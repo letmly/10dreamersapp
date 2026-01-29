@@ -58,7 +58,7 @@ async function callGeminiAPI(prompt: string): Promise<GeneratedRouteResponse> {
 
   // Получение модели
   const model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.8,
       topK: 40,
