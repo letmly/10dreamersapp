@@ -4,6 +4,7 @@ import type { GenerateRouteRequest } from '@/types/personalization'
 import { buildSystemPrompt } from '@/lib/gemini/systemPrompt'
 import { mockPlaces } from '@/lib/mockData'
 import { logGeminiPrompt, logGeminiResponse, logGeminiError } from '@/lib/logger'
+import type { GeneratedRouteResponse } from '@/types/personalization'
 import { generatedRouteResponseSchema } from '@/lib/gemini/routeSchema'
 
 /**
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
 /**
  * Вызов Gemini API для генерации маршрута
  */
-async function callGeminiAPI(prompt: string): Promise<GeneratedRouteResponse> {
+async function callGeminiAPI(prompt: string, sessionId: string): Promise<GeneratedRouteResponse> {
   const apiKey = process.env.GEMINI_API_KEY
 
   if (!apiKey) {
@@ -115,9 +116,20 @@ async function callGeminiAPI(prompt: string): Promise<GeneratedRouteResponse> {
 
     try {
       const parsedRoute = JSON.parse(cleanedText)
+
+      // Логируем успешный ответ
+      logGeminiResponse(sessionId, parsedRoute)
+
       return parsedRoute
     } catch (parseError) {
       console.error('Failed to parse Gemini response:', cleanedText)
+
+      // Логируем ошибку парсинга
+      logGeminiResponse(sessionId, {
+        error: 'JSON parse error',
+        rawResponse: cleanedText,
+      })
+
       throw new Error('Invalid JSON response from Gemini')
     }
   } catch (error) {
