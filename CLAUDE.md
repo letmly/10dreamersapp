@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-10Dreamers - веб-приложение для образовательного туризма по культурной столице России (Санкт-Петербург) с геймификацией. Приложение имеет мобильный фокус и разработано как PWA.
+10Dreamers - веб-приложение для образовательного туризма по культурной столице России (Санкт-Петербург) с геймификацией.
+
+**ВАЖНО: Приложение имеет МОБИЛЬНЫЙ ФОКУС и разработано как PWA.**
+- Mobile-first подход ко всем компонентам
+- Оптимизация для экранов 320px-428px (основные мобильные устройства)
+- Touch-friendly элементы (минимум 44x44px)
+- Safe-area поддержка для notch/dynamic island
+- PWA с офлайн возможностями
 
 **Tech Stack:**
 - Next.js 14 (App Router) + React 18 + TypeScript
@@ -182,12 +189,28 @@ Gemini генерирует JSON с:
 - Для клиентских компонентов используй `'use client'` директиву
 - Path aliases настроены: `@/` → `src/`, `@/components/`, `@/lib/` и т.д.
 
-### Mobile Development
-- Всегда тестируй на мобильных размерах экрана
-- Используй Tailwind утилиты: `safe-top`, `safe-bottom` для safe areas
-- Кнопки должны иметь `active:scale-95` для touch feedback
-- Input поля должны быть минимум 44x44px для touch targets
-- Bottomsheet компоненты используют `animate-slide-up` класс
+### Mobile Development (КРИТИЧНО - MOBILE FIRST!)
+
+**Обязательные правила для мобильной разработки:**
+- Всегда разрабатывай в первую очередь для мобильных (320px-428px)
+- Тестируй на мобильных размерах ПЕРЕД десктопом
+- Используй Tailwind mobile-first breakpoints: `sm:`, `md:`, `lg:`
+- Максимальная ширина контейнеров: `max-w-md` (448px) для мобильного контента
+- Safe areas: `safe-top`, `safe-bottom`, `safe-left`, `safe-right`
+
+**Touch-friendly элементы:**
+- Кнопки: минимум 44x44px, `active:scale-95` для feedback
+- Input поля: минимум 44x44px height
+- Отступы между элементами: минимум 8px
+- Тексты: минимум 14px (лучше 16px) для читаемости
+- Иконки: 24x24px минимум для tap targets
+
+**Навигация и UI:**
+- Bottomsheet для модальных окон (не обычные модалы)
+- Fixed footer с safe-bottom для главных кнопок
+- Sticky header с safe-top
+- Анимации: `animate-slide-up` для bottomsheets
+- Скроллинг: учитывать fixed элементы (pb-32 для footer)
 
 ### Leaflet/Map Development
 - Leaflet требует динамического импорта с `ssr: false`

@@ -1,73 +1,191 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
+  const router = useRouter()
+
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Hero Section */}
-      <section className="flex-1 flex flex-col items-center justify-center px-4 bg-gradient-to-b from-primary-500 to-primary-700 text-white safe-top">
-        <div className="text-center max-w-lg">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+    <main className="min-h-screen flex flex-col bg-gray-50">
+      {/* Hero Section - Mobile First */}
+      <section className="flex-1 flex flex-col items-center justify-center px-4 py-12 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 text-white safe-top">
+        <div className="text-center max-w-md w-full">
+          {/* Logo/Icon */}
+          <div className="text-6xl mb-4">🗺️</div>
+
+          {/* Title */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
             10Dreamers
           </h1>
-          <p className="text-xl md:text-2xl mb-2 opacity-90">
-            Открой культурную столицу России
+
+          {/* Subtitle */}
+          <p className="text-lg sm:text-xl mb-2 opacity-90">
+            Культурная столица России
           </p>
-          <p className="text-base md:text-lg mb-8 opacity-80">
-            Образовательные квесты, достижения и рейтинги
+          <p className="text-sm sm:text-base mb-8 opacity-80 px-4">
+            Персональные маршруты с AI и образовательные квесты
           </p>
 
-          <div className="flex flex-col gap-4 mt-8">
-            <Link href="/map" className="btn-primary bg-white text-primary-600 hover:bg-gray-50">
-              Начать путешествие
+          {/* Main CTA - Генерация маршрута */}
+          <div className="space-y-3 mb-6">
+            <button
+              onClick={() => router.push('/personalize')}
+              className="w-full px-6 py-4 bg-white text-blue-600 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              <span className="text-2xl">✨</span>
+              Создать маршрут для меня
+            </button>
+
+            <Link
+              href="/map"
+              className="w-full px-6 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/50 text-white rounded-2xl font-medium text-base hover:bg-white/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span>🗺️</span>
+              Открыть карту
             </Link>
-            <Link href="/quests" className="btn-secondary border-white text-white hover:bg-white/10">
-              Посмотреть квесты
-            </Link>
+          </div>
+
+          {/* Quick stats */}
+          <div className="flex justify-center gap-4 text-xs sm:text-sm opacity-90">
+            <div className="text-center">
+              <div className="font-bold text-lg">50+</div>
+              <div>мест</div>
+            </div>
+            <div className="w-px bg-white/30"></div>
+            <div className="text-center">
+              <div className="font-bold text-lg">20+</div>
+              <div>квестов</div>
+            </div>
+            <div className="w-px bg-white/30"></div>
+            <div className="text-center">
+              <div className="font-bold text-lg">AI</div>
+              <div>помощник</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Preview */}
-      <section className="py-12 px-4 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Возможности</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FeatureCard
-              emoji="🗺️"
-              title="Интерактивная карта"
-              description="Исследуй достопримечательности на карте города"
+      {/* How it works - Mobile optimized */}
+      <section className="py-8 px-4 bg-white">
+        <div className="max-w-md mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-gray-900">
+            Как это работает?
+          </h2>
+
+          <div className="space-y-4">
+            <StepCard
+              number="1"
+              emoji="📝"
+              title="Ответьте на вопросы"
+              description="Расскажите о своих интересах и предпочтениях"
             />
-            <FeatureCard
-              emoji="🎯"
-              title="Квесты и маршруты"
-              description="Проходи увлекательные образовательные квесты"
+            <StepCard
+              number="2"
+              emoji="🤖"
+              title="AI создаст маршрут"
+              description="Персональный план с квизами и советами"
             />
-            <FeatureCard
-              emoji="🏆"
-              title="Достижения"
-              description="Получай бейджи за посещение мест и выполнение заданий"
-            />
-            <FeatureCard
-              emoji="📊"
-              title="Рейтинг"
-              description="Соревнуйся с другими путешественниками"
+            <StepCard
+              number="3"
+              emoji="🚀"
+              title="Начните путешествие"
+              description="Следуйте маршруту и получайте бейджи"
             />
           </div>
         </div>
       </section>
+
+      {/* Features - Compact Mobile */}
+      <section className="py-8 px-4 bg-gray-50">
+        <div className="max-w-md mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 text-gray-900">
+            Возможности
+          </h2>
+
+          <div className="grid grid-cols-2 gap-3">
+            <FeatureCard emoji="🎯" title="Квесты" description="Образовательные задания" />
+            <FeatureCard emoji="🏆" title="Бейджи" description="Достижения и награды" />
+            <FeatureCard emoji="📊" title="Рейтинг" description="Соревнуйтесь с друзьями" />
+            <FeatureCard emoji="📸" title="Фото" description="Делитесь моментами" />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Bottom - Mobile Sticky */}
+      <section className="py-8 px-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+        <div className="max-w-md mx-auto text-center">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3">
+            Готовы начать?
+          </h2>
+          <p className="text-sm sm:text-base mb-6 opacity-90">
+            Создайте свой первый персонализированный маршрут прямо сейчас
+          </p>
+          <button
+            onClick={() => router.push('/personalize')}
+            className="w-full sm:w-auto px-8 py-4 bg-white text-blue-600 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl active:scale-95 transition-all"
+          >
+            ✨ Начать приключение
+          </button>
+        </div>
+      </section>
+
+      {/* Footer - Mobile friendly */}
+      <footer className="py-6 px-4 bg-gray-900 text-gray-400 text-center text-sm safe-bottom">
+        <div className="max-w-md mx-auto">
+          <p className="mb-2">© 2024 10Dreamers</p>
+          <p className="text-xs opacity-75">
+            Образовательный туризм по Санкт-Петербургу
+          </p>
+        </div>
+      </footer>
     </main>
   )
 }
 
-function FeatureCard({ emoji, title, description }: { emoji: string; title: string; description: string }) {
+// Step card для "Как это работает"
+function StepCard({
+  number,
+  emoji,
+  title,
+  description,
+}: {
+  number: string
+  emoji: string
+  title: string
+  description: string
+}) {
   return (
-    <div className="card text-center hover:shadow-lg transition-shadow">
-      <div className="text-5xl mb-3">{emoji}</div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
+    <div className="flex items-start gap-4 bg-white border-2 border-gray-100 rounded-xl p-4 hover:border-blue-200 transition-colors">
+      <div className="flex-shrink-0 w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+        {number}
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">{emoji}</span>
+          <h3 className="font-semibold text-gray-900">{title}</h3>
+        </div>
+        <p className="text-sm text-gray-600">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+// Compact feature card для мобильных
+function FeatureCard({
+  emoji,
+  title,
+  description,
+}: {
+  emoji: string
+  title: string
+  description: string
+}) {
+  return (
+    <div className="bg-white border-2 border-gray-100 rounded-xl p-4 text-center hover:border-blue-200 hover:shadow-md transition-all active:scale-95">
+      <div className="text-3xl mb-2">{emoji}</div>
+      <h3 className="font-semibold text-gray-900 text-sm mb-1">{title}</h3>
+      <p className="text-xs text-gray-600">{description}</p>
     </div>
   )
 }
