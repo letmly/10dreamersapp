@@ -6,22 +6,42 @@ import { searchPlace } from './2gis/search'
 
 /**
  * Проверяет и исправляет координаты места через поиск в 2GIS
+ * Поддерживает массив альтернативных названий (search_queries)
  */
 export async function validateAndFixCoordinates(
   placeName: string,
   regionId: string,
   originalLat: number,
-  originalLon: number
-): Promise<{ lat: number; lon: number; fixed: boolean; confidence: number }> {
+  originalLon: number,
+  searchQueries?: string[]
+): Promise<{ lat: number; lon: number; fixed: boolean; confidence: number; found: boolean; distance: number }> {
   try {
-    console.log(`🔍 Searching in 2GIS: "${placeName}" in region ${regionId}`)
+    // Собираем все варианты для поиска
+    const queries = searchQueries && searchQueries.length > 0 ? searchQueries : [placeName]
 
-    // Поиск места через 2GIS Places API
-    const result = await searchPlace(placeName, regionId)
+    console.log(`🔍 Searching in 2GIS: "${placeName}" in region ${regionId}`)
+    if (searchQueries && searchQueries.length > 0) {
+      console.log(`   Alternative queries: ${searchQueries.join(', ')}`)
+    }
+
+    // Пробуем каждый вариант названия
+    let result = null
+
+    for (const query of queries) {
+      result = await searchPlace(query, regionId)
+      if (result) {
+        if (query !== placeName) {
+          console.log(`   ✓ Found using alternative query: "${query}"`)
+        }
+        break
+      }
+      // Небольшая задержка между попытками
+      await new Promise((resolve) => setTimeout(resolve, 150))
+    }
 
     if (!result) {
-      console.warn(`❌ No 2GIS results for "${placeName}" in region ${regionId}`)
-      return { lat: originalLat, lon: originalLon, fixed: false, confidence: 0 }
+      console.warn(`❌ No 2GIS results for "${placeName}" (tried ${queries.length} queries)`)
+      return { lat: originalLat, lon: originalLon, fixed: false, confidence: 0, found: false, distance: Infinity }
     }
 
     const gisLat = result.coordinates.lat
@@ -40,27 +60,52 @@ export async function validateAndFixCoordinates(
       console.log(`✓ "${placeName}" coordinates OK (${distance.toFixed(3)}km diff)`)
     }
 
+    // Определяем confidence на основе расстояния
+    let confidence = 1.0
+    if (distance > 5.0) confidence = 0.2 // Очень далеко
+    else if (distance > 1.5) confidence = 0.5 // Далеко
+    else if (distance > 0.5) confidence = 0.7 // Средне
+    else if (distance > 0.1) confidence = 0.9 // Близко
+    else confidence = 1.0 // Очень близко
+
     return {
       lat: gisLat,
       lon: gisLon,
       fixed: distance > 0.01,
-      confidence: distance < 0.1 ? 1.0 : 0.8, // Высокая уверенность если близко
+      confidence,
+      found: true,
+      distance,
     }
   } catch (error) {
     console.error(`❌ Error validating coordinates for "${placeName}":`, error)
-    return { lat: originalLat, lon: originalLon, fixed: false, confidence: 0 }
+    return { lat: originalLat, lon: originalLon, fixed: false, confidence: 0, found: false, distance: Infinity }
   }
 }
 
 /**
- * Валидирует все точки маршрута
+ * Валидирует все точки маршрута и фильтрует точки с плохими координатами
+ *
+ * @param route - маршрут с точками
+ * @param regionId - ID региона в 2GIS
+ * @param maxDistance - максимальное расстояние смещения в км (по умолчанию 1.5км)
+ * @param desiredPointsCount - желаемое количество точек (опционально)
+ * @returns маршрут с отфильтрованными точками
  */
-export async function validateRouteCoordinates(route: any, regionId: string = '38'): Promise<any> {
+export async function validateRouteCoordinates(
+  route: any,
+  regionId: string = '38',
+  maxDistance: number = 1.5,
+  desiredPointsCount?: number
+): Promise<any> {
   if (!route.points || route.points.length === 0) {
     return route
   }
 
   console.log(`\n🔍 Validating ${route.points.length} points through 2GIS with region_id=${regionId}...`)
+  console.log(`   Max allowed distance: ${maxDistance}km`)
+  if (desiredPointsCount) {
+    console.log(`   Target points count: ${desiredPointsCount}`)
+  }
 
   // Валидируем каждую точку с задержкой (чтобы не перегружать 2GIS API)
   const validatedPoints = []
@@ -79,7 +124,8 @@ export async function validateRouteCoordinates(route: any, regionId: string = '3
       point.name,
       regionId,
       point.coordinates.lat,
-      point.coordinates.lon
+      point.coordinates.lon,
+      point.search_queries // Передаем альтернативные названия
     )
 
     validatedPoints.push({
@@ -91,19 +137,58 @@ export async function validateRouteCoordinates(route: any, regionId: string = '3
       _validation: {
         fixed: validated.fixed,
         confidence: validated.confidence,
+        found: validated.found,
+        distance: validated.distance,
       },
     })
   }
 
-  const fixedCount = validatedPoints.filter((p) => p._validation.fixed).length
+  // Фильтруем точки: оставляем только найденные и с расстоянием < maxDistance
+  const goodPoints = validatedPoints.filter(
+    (p) => p._validation.found && p._validation.distance < maxDistance
+  )
+  const badPoints = validatedPoints.filter(
+    (p) => !p._validation.found || p._validation.distance >= maxDistance
+  )
 
-  console.log(`\n✅ Validation complete:`)
-  console.log(`   Fixed: ${fixedCount}/${route.points.length}`)
-  console.log(`   OK: ${route.points.length - fixedCount}/${route.points.length}`)
+  console.log(`\n📊 Validation results:`)
+  console.log(`   Total generated: ${route.points.length}`)
+  console.log(`   Found in 2GIS: ${validatedPoints.filter((p) => p._validation.found).length}`)
+  console.log(`   Good coordinates (< ${maxDistance}km): ${goodPoints.length}`)
+  console.log(`   Bad coordinates (> ${maxDistance}km): ${badPoints.length}`)
+
+  if (badPoints.length > 0) {
+    console.log(`\n❌ Filtered out points:`)
+    badPoints.forEach((p) => {
+      const reason = !p._validation.found
+        ? 'not found in 2GIS'
+        : `too far (${p._validation.distance.toFixed(2)}km)`
+      console.log(`   - ${p.name} (${reason})`)
+    })
+  }
+
+  // Если указано желаемое количество точек, берем только его
+  let finalPoints = goodPoints
+  if (desiredPointsCount && goodPoints.length > desiredPointsCount) {
+    console.log(`\n✂️ Trimming to ${desiredPointsCount} points (from ${goodPoints.length})`)
+    finalPoints = goodPoints.slice(0, desiredPointsCount)
+  }
+
+  // Пересчитываем point_number
+  finalPoints = finalPoints.map((point, index) => ({
+    ...point,
+    point_number: index + 1,
+  }))
+
+  console.log(`\n✅ Final route: ${finalPoints.length} points`)
 
   return {
     ...route,
-    points: validatedPoints,
+    points: finalPoints,
+    statistics: {
+      ...route.statistics,
+      total_points: finalPoints.length,
+    },
   }
 }
 

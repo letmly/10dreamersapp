@@ -114,6 +114,7 @@ export interface RoutePoint {
     lat: number
     lon: number
   }
+  search_queries?: string[]  // Альтернативные названия для поиска в 2GIS
   visit_duration_minutes: number
   price_level: BudgetLevel
   quiz?: PlaceQuiz

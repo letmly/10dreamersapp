@@ -44,7 +44,13 @@ export async function POST(request: NextRequest) {
       // Используем region_id из запроса пользователя
       const regionId = body.regionId || '38'
       console.log('📍 Region ID from request body:', regionId)
-      generatedRoute.route = await validateRouteCoordinates(generatedRoute.route, regionId)
+
+      // Вычисляем желаемое количество точек на основе времени
+      const desiredPointsCount = calculateDesiredPointsCount(body.answers.timeAvailable)
+      console.log(`🎯 Target points count for ${body.answers.timeAvailable}: ${desiredPointsCount}`)
+
+      // Валидация и фильтрация (maxDistance = 1.5km)
+      generatedRoute.route = await validateRouteCoordinates(generatedRoute.route, regionId, 1.5, desiredPointsCount)
     }
 
     // Валидация и исправление
@@ -166,4 +172,27 @@ function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' | 'night' {
   if (hour >= 12 && hour < 18) return 'afternoon'
   if (hour >= 18 && hour < 22) return 'evening'
   return 'night'
+}
+
+/**
+ * Вычислить желаемое количество точек на основе доступного времени
+ * (без учета 200% запаса - это уже в промпте)
+ */
+function calculateDesiredPointsCount(timeAvailable: string): number {
+  switch (timeAvailable) {
+    case '30min':
+      return 3 // генерируем 6, оставляем 3
+    case '1hour':
+      return 4 // генерируем 8, оставляем 4
+    case '2hours':
+      return 5 // генерируем 10, оставляем 5
+    case '3hours':
+      return 6 // генерируем 12, оставляем 6
+    case 'halfday':
+      return 8 // генерируем 16, оставляем 8
+    case 'fullday':
+      return 11 // генерируем 22, оставляем 11
+    default:
+      return 5 // по умолчанию
+  }
 }
