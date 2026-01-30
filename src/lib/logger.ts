@@ -6,9 +6,10 @@ import path from 'path'
  */
 
 const LOGS_DIR = path.join(process.cwd(), 'logs')
+const IS_PRODUCTION = process.env.NODE_ENV === 'production'
 
-// Создаем папку logs если её нет
-if (!fs.existsSync(LOGS_DIR)) {
+// Создаем папку logs если её нет (только в dev)
+if (!IS_PRODUCTION && !fs.existsSync(LOGS_DIR)) {
   fs.mkdirSync(LOGS_DIR, { recursive: true })
 }
 
@@ -19,7 +20,13 @@ export function logGeminiPrompt(prompt: string) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const sessionId = `session-${timestamp}`
 
-  // Файл с промптом
+  // В продакшене только console.log
+  if (IS_PRODUCTION) {
+    console.log(`📝 Prompt for ${sessionId} (first 200 chars):`, prompt.substring(0, 200))
+    return sessionId
+  }
+
+  // В dev - пишем в файл
   const promptFile = path.join(LOGS_DIR, `${sessionId}-prompt.txt`)
   fs.writeFileSync(promptFile, prompt, 'utf-8')
 
@@ -32,33 +39,29 @@ export function logGeminiPrompt(prompt: string) {
  * Логирует ответ для существующей сессии
  */
 export function logGeminiResponse(sessionId: string, response: any) {
-  // Файл с ответом
-  const responseFile = path.join(LOGS_DIR, `${sessionId}-response.json`)
-  fs.writeFileSync(responseFile, JSON.stringify(response, null, 2), 'utf-8')
-
-  // Также создаем summary файл
-  const summaryFile = path.join(LOGS_DIR, `${sessionId}-summary.txt`)
   const summary = `
-=== GEMINI INTERACTION SUMMARY ===
-Timestamp: ${new Date().toISOString()}
-Session ID: ${sessionId}
-
-Prompt file: ${sessionId}-prompt.txt
-Response file: ${sessionId}-response.json
-
-Response stats:
+=== GEMINI RESPONSE ${sessionId} ===
 - Route ID: ${response.route?.id || 'N/A'}
 - Route name: ${response.route?.name || 'N/A'}
 - Points count: ${response.route?.points?.length || 0}
 - Total distance: ${response.route?.statistics?.total_distance || 0} km
 - Total time: ${response.route?.statistics?.total_walk_time || 0} min
 - Personalization score: ${response.route?.personalization_score || 0}%
-
 Success: ${response.route ? 'YES' : 'NO'}
-=== END SUMMARY ===
   `.trim()
 
-  fs.writeFileSync(summaryFile, summary, 'utf-8')
+  // В продакшене только console.log
+  if (IS_PRODUCTION) {
+    console.log(summary)
+    return
+  }
+
+  // В dev - пишем в файлы
+  const responseFile = path.join(LOGS_DIR, `${sessionId}-response.json`)
+  fs.writeFileSync(responseFile, JSON.stringify(response, null, 2), 'utf-8')
+
+  const summaryFile = path.join(LOGS_DIR, `${sessionId}-summary.txt`)
+  fs.writeFileSync(summaryFile, `${summary}\n\nPrompt file: ${sessionId}-prompt.txt\nResponse file: ${sessionId}-response.json`, 'utf-8')
 
   console.log(`✅ Response logged: logs/${sessionId}-response.json`)
 }
@@ -79,25 +82,27 @@ export function logGeminiError(prompt: string, error: Error) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const sessionId = `error-${timestamp}`
 
-  // Файл с промптом
+  const errorContent = `
+=== GEMINI ERROR ${sessionId} ===
+Timestamp: ${new Date().toISOString()}
+Error: ${error.message}
+Stack trace:
+${error.stack}
+  `.trim()
+
+  // В продакшене только console.error
+  if (IS_PRODUCTION) {
+    console.error(errorContent)
+    console.error('Prompt (first 200 chars):', prompt.substring(0, 200))
+    return sessionId
+  }
+
+  // В dev - пишем в файлы
   const promptFile = path.join(LOGS_DIR, `${sessionId}-prompt.txt`)
   fs.writeFileSync(promptFile, prompt, 'utf-8')
 
-  // Файл с ошибкой
   const errorFile = path.join(LOGS_DIR, `${sessionId}-error.txt`)
-  const errorContent = `
-=== GEMINI ERROR ===
-Timestamp: ${new Date().toISOString()}
-Error: ${error.message}
-
-Stack trace:
-${error.stack}
-
-Prompt was saved to: ${sessionId}-prompt.txt
-=== END ERROR ===
-  `.trim()
-
-  fs.writeFileSync(errorFile, errorContent, 'utf-8')
+  fs.writeFileSync(errorFile, errorContent + `\n\nPrompt was saved to: ${sessionId}-prompt.txt`, 'utf-8')
 
   console.error(`❌ Error logged to: logs/${sessionId}-*`)
 
@@ -108,6 +113,10 @@ Prompt was saved to: ${sessionId}-prompt.txt
  * Получить список всех логов
  */
 export function getLogsList() {
+  if (IS_PRODUCTION) {
+    return []
+  }
+
   const files = fs.readdirSync(LOGS_DIR)
 
   const sessions = new Map<string, { prompt?: string; response?: string; summary?: string; error?: string }>()
@@ -142,6 +151,11 @@ export function getLogsList() {
  * Очистить старые логи (старше N дней)
  */
 export function cleanOldLogs(daysToKeep: number = 7) {
+  if (IS_PRODUCTION) {
+    console.log('🧹 Log cleanup skipped in production')
+    return 0
+  }
+
   const files = fs.readdirSync(LOGS_DIR)
   const now = Date.now()
   const maxAge = daysToKeep * 24 * 60 * 60 * 1000
