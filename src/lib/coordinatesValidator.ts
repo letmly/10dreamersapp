@@ -20,7 +20,7 @@ export async function validateAndFixCoordinates(
     const result = await searchPlace(placeName, regionId)
 
     if (!result) {
-      console.warn(`❌ No 2GIS results for "${placeName}" in ${cityName}`)
+      console.warn(`❌ No 2GIS results for "${placeName}" in region ${regionId}`)
       return { lat: originalLat, lon: originalLon, fixed: false, confidence: 0 }
     }
 

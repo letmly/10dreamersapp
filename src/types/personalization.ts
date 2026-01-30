@@ -88,7 +88,7 @@ export interface PersonalizationQuiz {
 // Запрос к API для генерации маршрута
 export interface GenerateRouteRequest {
   answers: PersonalizationAnswers
-  city?: string  // По умолчанию Санкт-Петербург
+  regionId?: string  // 2GIS region_id (по умолчанию '38' - СПб)
 }
 
 // Ответ от API с сгенерированным маршрутом
