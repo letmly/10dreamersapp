@@ -2,11 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import type { GeneratedRouteResponse } from '@/types/personalization'
 
-// Динамический импорт карты
-const RouteMapView = dynamic(() => import('@/components/routes/RouteMapView'), { ssr: false })
+// Динамический импорт карты (2GIS)
+const RouteMapView2GIS = dynamic(() => import('@/components/routes/RouteMapView2GIS'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[500px] flex items-center justify-center bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mx-auto mb-4"></div>
+        <p className="text-gray-700 font-medium">Загрузка карты...</p>
+      </div>
+    </div>
+  ),
+})
 
 export default function RouteDetailPage() {
   const params = useParams()
@@ -32,10 +43,10 @@ export default function RouteDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p className="text-gray-600">Загрузка маршрута...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4" />
+          <p className="text-gray-700 font-bold text-lg">Загрузка маршрута...</p>
         </div>
       </div>
     )
@@ -43,16 +54,16 @@ export default function RouteDetailPage() {
 
   if (!route) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🗺️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Маршрут не найден</h1>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-6">
+        <div className="text-center max-w-md bg-white rounded-3xl p-8 shadow-2xl">
+          <div className="text-7xl mb-4">🗺️</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Маршрут не найден</h1>
           <p className="text-gray-600 mb-6">Похоже, маршрут был удален или не существует</p>
           <button
             onClick={() => router.push('/personalize')}
-            className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 active:scale-95 transition-all"
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-full font-bold hover:shadow-xl active:scale-95 transition-all"
           >
-            Создать новый маршрут
+            ✨ Создать новый маршрут
           </button>
         </div>
       </div>
@@ -60,208 +71,133 @@ export default function RouteDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10 safe-top">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <header className="bg-white/95 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10 safe-top">
+        <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => router.push('/')}
-              className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
-            >
-              ← Главная
-            </button>
-            <div className="text-sm font-medium text-gray-600">
-              {route.statistics.total_points} точки · {route.statistics.total_distance.toFixed(1)} км
+            <Link href="/" className="text-lg font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                KULTR
+              </span>
+              <span className="text-gray-800">TALK</span>
+            </Link>
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-600 bg-gray-100 px-4 py-2 rounded-full">
+              <span>{route.statistics.total_points} точки</span>
+              <span>·</span>
+              <span>{route.statistics.total_distance.toFixed(1)} км</span>
             </div>
           </div>
         </div>
       </header>
 
       {/* Hero секция */}
-      <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white">
+        <div className="max-w-4xl mx-auto px-6 py-12">
           <div className="text-center">
             {/* Personalization Score */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6">
               <span className="text-2xl">✨</span>
-              <span className="font-medium">Персонализация: {route.personalization_score}%</span>
+              <span className="font-bold">Персонализация: {route.personalization_score}%</span>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">{route.name}</h1>
-            <p className="text-lg text-blue-50 mb-6 max-w-2xl mx-auto">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{route.name}</h1>
+            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
               {route.description}
             </p>
 
             {/* Статистика */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-2xl mb-1">⏱️</div>
-                <div className="text-sm text-blue-100">Время</div>
-                <div className="text-xl font-bold">
-                  {Math.floor(route.statistics.total_walk_time / 60)}ч {route.statistics.total_walk_time % 60}м
-                </div>
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5">
+                <div className="text-3xl mb-2">⏱️</div>
+                <div className="text-sm text-white/80 mb-1">Время</div>
+                <div className="text-xl font-bold">{Math.round(route.statistics.total_distance * 15)} мин</div>
               </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-2xl mb-1">📍</div>
-                <div className="text-sm text-blue-100">Точек</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5">
+                <div className="text-3xl mb-2">📍</div>
+                <div className="text-sm text-white/80 mb-1">Точки</div>
                 <div className="text-xl font-bold">{route.statistics.total_points}</div>
               </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-2xl mb-1">💰</div>
-                <div className="text-sm text-blue-100">Стоимость</div>
-                <div className="text-xl font-bold">
-                  {route.statistics.estimated_cost.min}-{route.statistics.estimated_cost.max}₽
-                </div>
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5">
+                <div className="text-3xl mb-2">🚶</div>
+                <div className="text-sm text-white/80 mb-1">Дистанция</div>
+                <div className="text-xl font-bold">{route.statistics.total_distance.toFixed(1)} км</div>
               </div>
-
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-2xl mb-1">🔥</div>
-                <div className="text-sm text-blue-100">Калории</div>
-                <div className="text-xl font-bold">{route.statistics.calories_burned}</div>
+              <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5">
+                <div className="text-3xl mb-2">💰</div>
+                <div className="text-sm text-white/80 mb-1">Бюджет</div>
+                <div className="text-xl font-bold">{route.points.reduce((sum, p) => sum + (p.price_level.includes('бесплатно') || p.price_level.includes('free') ? 0 : 200), 0)} ₽</div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* AI Reasoning */}
-      {route.reasoning && (
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="text-2xl">🤖</div>
-              <div>
-                <div className="font-medium text-blue-900 mb-1">Почему этот маршрут?</div>
-                <p className="text-blue-800 text-sm">{route.reasoning}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Карта маршрута */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <RouteMapView route={route} />
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-200">
+          <RouteMapView2GIS route={route} />
         </div>
       </div>
 
-      {/* Точки маршрута */}
-      <div className="max-w-4xl mx-auto px-4 py-6 pb-32">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Точки маршрута</h2>
-
-        <div className="space-y-6">
+      {/* Список точек */}
+      <div className="max-w-4xl mx-auto px-6 pb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">📍 Точки маршрута</h2>
+        <div className="space-y-4">
           {route.points.map((point, index) => (
             <div
-              key={point.point_number}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              key={index}
+              className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-gray-200"
             >
-              <div className="p-6">
-                {/* Заголовок точки */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0">
-                      {point.point_number}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{point.name}</h3>
-                      <p className="text-gray-600 text-sm mb-3">{point.description}</p>
-
-                      {/* Метаданные */}
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs">
-                          ⏱️ {point.visit_duration_minutes} мин
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs">
-                          💰 {point.price_level}
-                        </span>
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-xs">
-                          {getCategoryEmoji(point.category)} {point.category}
-                        </span>
-                      </div>
-
-                      {/* Советы */}
-                      {point.tips && point.tips.length > 0 && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
-                          <div className="font-medium text-yellow-900 text-sm mb-2">💡 Советы:</div>
-                          <ul className="text-sm text-yellow-800 space-y-1">
-                            {point.tips.map((tip, i) => (
-                              <li key={i}>• {tip}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Квиз */}
-                      {point.quiz && (
-                        <details className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                          <summary className="font-medium text-purple-900 cursor-pointer mb-3">
-                            🎯 Квиз ({point.quiz.total_points} баллов)
-                          </summary>
-                          <div className="space-y-4">
-                            {point.quiz.questions.map((q, qIndex) => (
-                              <div key={qIndex} className="bg-white rounded-lg p-3">
-                                <div className="font-medium text-gray-900 mb-2">
-                                  {qIndex + 1}. {q.question}
-                                </div>
-                                <div className="space-y-2">
-                                  {q.options.map((option, oIndex) => (
-                                    <div
-                                      key={oIndex}
-                                      className={`px-3 py-2 rounded-lg text-sm ${
-                                        oIndex === q.correct_answer
-                                          ? 'bg-green-100 border border-green-300 font-medium'
-                                          : 'bg-gray-50 border border-gray-200'
-                                      }`}
-                                    >
-                                      {option}
-                                      {oIndex === q.correct_answer && ' ✓'}
-                                    </div>
-                                  ))}
-                                </div>
-                                {q.explanation && (
-                                  <div className="mt-2 text-xs text-gray-600 italic">
-                                    💬 {q.explanation}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  </div>
+              <div className="flex gap-4">
+                {/* Number badge */}
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-md">
+                  {point.point_number}
                 </div>
 
-                {/* Переход к следующей точке */}
-                {point.transition && index < route.points.length - 1 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="text-2xl">{getTransportEmoji(point.transition.method)}</div>
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{point.transition.description}</div>
-                        <div className="text-xs">
-                          {point.transition.distance_km.toFixed(1)} км · {point.transition.duration_minutes} мин
-                        </div>
-                      </div>
-                    </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{point.name}</h3>
+                  <p className="text-gray-600 mb-4 leading-relaxed">{point.description}</p>
+
+                  {/* Stats */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm font-medium">
+                      ⏱️ {point.visit_duration_minutes} мин
+                    </span>
+                    <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium">
+                      💰 {point.price_level}
+                    </span>
+                    {(point as any).best_time_to_visit && (
+                      <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+                        🕐 {(point as any).best_time_to_visit}
+                      </span>
+                    )}
                   </div>
-                )}
+
+                  {/* AI reasoning */}
+                  {(point as any).ai_reasoning && (
+                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                      <p className="text-sm text-gray-700">
+                        <span className="font-bold text-purple-600">💡 Почему это место:</span>{' '}
+                        {(point as any).ai_reasoning}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Кнопка "Начать путешествие" */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t safe-bottom p-4 z-30">
-        <div className="max-w-4xl mx-auto">
+      {/* CTA */}
+      <div className="max-w-4xl mx-auto px-6 pb-12">
+        <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white text-center shadow-2xl">
+          <h2 className="text-3xl font-bold mb-4">Готовы начать путешествие?</h2>
+          <p className="text-white/90 mb-6">Следуйте маршруту и открывайте для себя Санкт-Петербург</p>
           <button
             onClick={() => router.push(`/journey/${route.id}`)}
-            className="w-full px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-blue-600 hover:to-purple-700 active:scale-95 transition-all shadow-lg"
+            className="px-8 py-4 bg-white text-gray-900 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl active:scale-95 transition-all"
           >
             🚀 Начать путешествие
           </button>
@@ -269,30 +205,4 @@ export default function RouteDetailPage() {
       </div>
     </div>
   )
-}
-
-function getCategoryEmoji(category: string): string {
-  const map: Record<string, string> = {
-    history: '🏛️',
-    art: '🎨',
-    architecture: '🏰',
-    nature: '🌳',
-    food: '🍽️',
-    culture: '🎭',
-    photography: '📸',
-    science: '🔬',
-    music: '🎵',
-    sports: '⚽',
-  }
-  return map[category] || '📍'
-}
-
-function getTransportEmoji(method: string): string {
-  const map: Record<string, string> = {
-    walk: '🚶',
-    transit: '🚌',
-    taxi: '🚕',
-    cycling: '🚴',
-  }
-  return map[method] || '🚶'
 }

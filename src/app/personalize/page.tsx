@@ -11,9 +11,9 @@ import {
 } from '@/lib/personalizationQuiz'
 import type { PersonalizationAnswers } from '@/types/personalization'
 
-// Динамический импорт карты для выбора точки старта
-const MapLocationPicker = dynamic(
-  () => import('@/components/personalization/MapLocationPicker'),
+// Динамический импорт карты для выбора точки старта (2GIS)
+const Map2GISLocationPicker = dynamic(
+  () => import('@/components/personalization/Map2GISLocationPicker'),
   { ssr: false }
 )
 
@@ -58,15 +58,22 @@ export default function PersonalizationPage() {
 
     try {
       // Преобразуем ответы в нужный формат
+      const answersMap = answers as any
       const formattedAnswers: PersonalizationAnswers = {
-        timeAvailable: answers.time as any,
-        budget: answers.budget as any,
-        vibes: answers.vibes as any,
-        foodPreferences: (answers.food as any) || [],
-        mentalState: answers.mentalState as any,
-        openToEvents: answers.events as any,
-        startLocation: answers.startLocation as any,
+        timeAvailable: answersMap.time,
+        budget: answersMap.budget,
+        vibes: answersMap.vibes,
+        foodPreferences: answersMap.food || [],
+        mentalState: answersMap.mentalState,
+        openToEvents: answersMap.events,
+        startLocation: answersMap.startLocation,
       }
+
+      // Получаем region_id из startLocation (если пользователь выбрал на карте)
+      console.log('📍 startLocation:', answersMap.startLocation)
+      const regionId = answersMap.startLocation?.regionId || '38'
+
+      console.log('🌍 Generating route for region_id:', regionId)
 
       // Вызов API
       const response = await fetch('/api/routes/generate', {
@@ -76,7 +83,7 @@ export default function PersonalizationPage() {
         },
         body: JSON.stringify({
           answers: formattedAnswers,
-          city: 'saint-petersburg',
+          regionId: regionId,
         }),
       })
 
@@ -101,7 +108,8 @@ export default function PersonalizationPage() {
 
   // Проверка, можно ли перейти дальше
   const canProceed = () => {
-    const answer = answers[step.id]
+    const answersMap = answers as any
+    const answer = answersMap[step.id]
     if (!answer) return false
 
     if (step.type === 'multiple' && Array.isArray(answer)) {
@@ -116,26 +124,36 @@ export default function PersonalizationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10 safe-top">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10 safe-top">
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => router.push('/')}
-              className="text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
-              ← Назад
+              <span>←</span>
+              <span className="hidden sm:inline">Назад</span>
             </button>
-            <div className="text-sm font-medium text-gray-600">
+
+            {/* Logo */}
+            <div className="text-lg font-bold tracking-tight">
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                KULTR
+              </span>
+              <span className="text-gray-800">TALK</span>
+            </div>
+
+            <div className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               {currentStep + 1} / {personalizationQuiz.steps.length}
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 transition-all duration-300"
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 transition-all duration-500 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -143,12 +161,12 @@ export default function PersonalizationPage() {
       </header>
 
       {/* Content */}
-      <main className={`max-w-2xl mx-auto px-4 ${step.type === 'map' ? 'py-4 pb-24' : 'py-8 pb-32'}`}>
+      <main className={`max-w-2xl mx-auto px-6 ${step.type === 'map' ? 'py-6 pb-24' : 'py-8 pb-32'}`}>
         {/* Заголовок шага */}
-        <div className={`text-center ${step.type === 'map' ? 'mb-4' : 'mb-8'}`}>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{step.question}</h1>
+        <div className={`text-center ${step.type === 'map' ? 'mb-6' : 'mb-10'}`}>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">{step.question}</h1>
           {step.description && (
-            <p className="text-gray-600">{step.description}</p>
+            <p className="text-gray-600 text-lg">{step.description}</p>
           )}
         </div>
 
@@ -157,7 +175,7 @@ export default function PersonalizationPage() {
           {step.type === 'single' && step.options && (
             <BubbleSelector
               options={step.options}
-              selected={answers[step.id] || ''}
+              selected={(answers as any)[step.id] || ''}
               onChange={handleAnswer}
               multiple={false}
             />
@@ -166,7 +184,7 @@ export default function PersonalizationPage() {
           {step.type === 'multiple' && step.options && (
             <BubbleSelector
               options={step.options}
-              selected={(answers[step.id] as string[]) || []}
+              selected={((answers as any)[step.id] as string[]) || []}
               onChange={handleAnswer}
               multiple={true}
               maxSelections={step.maxSelections}
@@ -174,23 +192,31 @@ export default function PersonalizationPage() {
           )}
 
           {step.type === 'map' && (
-            <MapLocationPicker
-              value={answers[step.id] as any}
-              onChange={handleAnswer}
-            />
+            <div className="rounded-3xl overflow-hidden shadow-2xl border border-gray-200 h-[400px]">
+              <Map2GISLocationPicker
+                onLocationSelect={(lat, lng, address, regionId) => {
+                  handleAnswer({ lat, lng, address, regionId })
+                }}
+                initialLocation={
+                  (answers as any)[step.id]
+                    ? { lat: ((answers as any)[step.id] as any).lat, lng: ((answers as any)[step.id] as any).lng }
+                    : undefined
+                }
+              />
+            </div>
           )}
         </div>
       </main>
 
       {/* Footer с кнопками */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t safe-bottom">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex gap-3">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200/50 safe-bottom">
+        <div className="max-w-2xl mx-auto px-6 py-5 flex gap-3">
           {currentStep > 0 && (
             <button
               onClick={handleBack}
-              className="px-6 py-3 border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 active:scale-95 transition-transform"
+              className="px-6 py-3 border-2 border-gray-300 rounded-full font-semibold text-gray-700 hover:bg-gray-50 active:scale-95 transition-all"
             >
-              Назад
+              ← Назад
             </button>
           )}
 
@@ -198,11 +224,11 @@ export default function PersonalizationPage() {
             onClick={handleNext}
             disabled={!canProceed() || isGenerating}
             className={`
-              flex-1 px-6 py-3 rounded-xl font-medium transition-all
+              flex-1 px-6 py-3 rounded-full font-bold transition-all shadow-lg
               ${
                 canProceed() && !isGenerating
-                  ? 'bg-blue-500 text-white hover:bg-blue-600 active:scale-95'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hover:shadow-xl active:scale-95'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
               }
             `}
           >

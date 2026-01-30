@@ -7,7 +7,7 @@ import { useGeolocation } from '@/hooks/useGeolocation'
 import { calculateDistance } from '@/lib/utils'
 import type { GeneratedRouteResponse } from '@/types/personalization'
 
-const JourneyMap = dynamic(() => import('@/components/journey/JourneyMap'), { ssr: false })
+const JourneyMap2GIS = dynamic(() => import('@/components/journey/JourneyMap2GIS'), { ssr: false })
 
 export default function JourneyPage() {
   const params = useParams()
@@ -142,7 +142,7 @@ export default function JourneyPage() {
 
       {/* Карта */}
       <div className="flex-1 relative">
-        <JourneyMap
+        <JourneyMap2GIS
           route={route}
           currentPointIndex={currentPointIndex}
           visitedPoints={visitedPoints}
@@ -157,7 +157,7 @@ export default function JourneyPage() {
                 <span className="text-2xl">📍</span>
                 <div className="flex-1">
                   <div className="font-bold">Вы рядом!</div>
-                  <div className="text-sm opacity-90">Нажмите "Отметиться" чтобы продолжить</div>
+                  <div className="text-sm opacity-90">Нажмите &quot;Отметиться&quot; чтобы продолжить</div>
                 </div>
               </div>
             </div>

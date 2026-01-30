@@ -80,7 +80,7 @@ export const generatedRouteResponseSchema = z.object({
 })
 
 // Экспорт JSON Schema для Gemini
-export const routeJsonSchema = zodToJsonSchema(generatedRouteResponseSchema, 'routeResponse')
+export const routeJsonSchema = zodToJsonSchema(generatedRouteResponseSchema as any, 'routeResponse')
 
 // TypeScript типы из схемы
 export type RoutePoint = z.infer<typeof routePointSchema>

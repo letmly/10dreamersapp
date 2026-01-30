@@ -6,6 +6,7 @@ import { mockPlaces } from '@/lib/mockData'
 import { logGeminiPrompt, logGeminiResponse, logGeminiError } from '@/lib/logger'
 import type { GeneratedRouteResponse } from '@/types/personalization'
 import { generatedRouteResponseSchema } from '@/lib/gemini/routeSchema'
+import { validateRouteCoordinates } from '@/lib/coordinatesValidator'
 
 /**
  * POST /api/routes/generate
@@ -37,6 +38,15 @@ export async function POST(request: NextRequest) {
     // Вызов Gemini API с structured output
     const generatedRoute = await callGeminiAPI(systemPrompt, sessionId)
 
+    // Валидация координат через 2GIS Places API
+    if (generatedRoute.route) {
+      console.log('🔍 Validating coordinates through 2GIS Places API...')
+      // Используем region_id из запроса пользователя
+      const regionId = body.regionId || '38'
+      console.log('📍 Region ID from request body:', regionId)
+      generatedRoute.route = await validateRouteCoordinates(generatedRoute.route, regionId)
+    }
+
     // Валидация и исправление
     if (generatedRoute.route) {
       const actualPoints = generatedRoute.route.points?.length || 0
@@ -54,14 +64,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(generatedRoute, { status: 200 })
   } catch (error) {
     console.error('Error generating route:', error)
-
-    // Логируем ошибку если есть промпт
-    try {
-      const systemPrompt = buildSystemPrompt(context)
-      logGeminiError(systemPrompt, error instanceof Error ? error : new Error(String(error)))
-    } catch (logError) {
-      console.error('Failed to log error:', logError)
-    }
 
     return NextResponse.json(
       { error: 'Failed to generate route', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -83,14 +85,14 @@ async function callGeminiAPI(prompt: string, sessionId: string): Promise<Generat
   // Инициализация Google Generative AI
   const genAI = new GoogleGenerativeAI(apiKey)
 
-  // Получение модели
+  // Получение модели с JSON mode
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.8,
       topK: 40,
       topP: 0.95,
-      maxOutputTokens: 8192,
+      responseMimeType: 'application/json',
     },
   })
 
@@ -104,10 +106,10 @@ async function callGeminiAPI(prompt: string, sessionId: string): Promise<Generat
       throw new Error('No response from Gemini API')
     }
 
-    console.log('Gemini raw response:', generatedText.substring(0, 500))
+    console.log('Gemini raw response (first 500 chars):', generatedText.substring(0, 500))
 
-    // Парсим JSON из ответа
-    // Gemini может вернуть markdown с ```json, нужно его убрать
+    // С responseMimeType: 'application/json' Gemini должен вернуть чистый JSON
+    // Но на всякий случай всё равно очищаем
     const cleanedText = generatedText
       .replace(/```json\n/g, '')
       .replace(/```\n/g, '')
@@ -122,12 +124,16 @@ async function callGeminiAPI(prompt: string, sessionId: string): Promise<Generat
 
       return parsedRoute
     } catch (parseError) {
-      console.error('Failed to parse Gemini response:', cleanedText)
+      console.error('❌ Failed to parse Gemini response as JSON')
+      console.error('Raw response:', generatedText)
+      console.error('Cleaned text:', cleanedText)
 
       // Логируем ошибку парсинга
       logGeminiResponse(sessionId, {
         error: 'JSON parse error',
-        rawResponse: cleanedText,
+        rawResponse: generatedText,
+        cleanedText: cleanedText,
+        parseError: parseError instanceof Error ? parseError.message : 'Unknown',
       })
 
       throw new Error('Invalid JSON response from Gemini')

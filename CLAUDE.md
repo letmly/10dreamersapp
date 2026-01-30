@@ -17,8 +17,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Next.js 14 (App Router) + React 18 + TypeScript
 - Tailwind CSS для стилизации
 - Zustand для state management
-- React Leaflet для интерактивных карт
+- **2GIS MapGL** для интерактивных карт и геолокации
+- **2GIS Places API** для поиска реальных координат мест
+- **2GIS Geocoder API** для обратного геокодирования
 - Framer Motion для анимаций
+- Google Gemini API для AI-генерации персонализированных маршрутов
+
+**Design System:**
+- Брендинг: KULTRTALK (KULTR с градиентом + TALK)
+- Органические формы (blob shapes) для визуального интереса
+- Градиенты: blue-600 → purple-600 → pink-600
+- Фоновые изображения Санкт-Петербурга с чередованием
+- Rounded-full кнопки с тенями
+- Backdrop blur для glassmorphism эффектов
 
 ## Development Commands
 
@@ -99,40 +110,40 @@ src/
 - `calculateDistance` использует формулу Haversine для точности
 - `isNearby` проверяет, находится ли пользователь рядом с местом (100м)
 
-**Map Integration:**
-- Используется Leaflet через динамический импорт (`next/dynamic`) с `ssr: false`
-- `MapView` компонент управляет картой и маркерами
+**Map Integration (2GIS MapGL):**
+- Используется **2GIS MapGL JS API** с динамическим импортом (`next/dynamic`) с `ssr: false`
+- Компоненты: `Map2GISView`, `Map2GISLocationPicker`, `JourneyMap2GIS`, `RouteMapView2GIS`
+- API ключ: `NEXT_PUBLIC_2GIS_API_KEY` в `.env`
 - Карта показывает достопримечательности с emoji-иконками по категориям
-- При клике на маркер открывается bottomsheet с деталями места
-- Кнопка "Моя позиция" центрирует карту на пользователе
-- OpenStreetMap используется как источник тайлов
+- HtmlMarker для кастомных маркеров, Marker для базовых (включая draggable)
+- Polyline для отрисовки линий маршрутов
+- Geocoder API для обратного геокодирования (координаты → адрес)
+- Все координаты от Gemini валидируются через OSM Nominatim API
+- Карты оптимизированы для России и СНГ
 
-**Routing System (src/lib/routing.ts):**
+**Routing System (src/lib/2gis/routing.ts):**
 
-Параметры для построения маршрута:
-1. **RouteOptions** - настройки маршрута:
-   - `transportMode` - способ передвижения (walking/cycling/driving/transit)
-   - `startLocation` - начальная точка (обычно текущая позиция пользователя)
-   - `endLocation` - конечная точка
-   - `optimize` - оптимизировать порядок точек (TSP алгоритм)
-   - `avoidTolls`, `avoidHighways` - ограничения
+**ВАЖНО: Используем OSRM вместо 2GIS Directions API (у 2GIS только 50 запросов/день).**
 
-2. **RoutePolyline** - линия маршрута на карте:
-   - `coordinates` - массив точек { lat, lng } для отрисовки линии
-   - `segments` - сегменты между точками с детальной информацией
+Публичный OSRM endpoint: `https://router.project-osrm.org/route/v1/foot/{lon},{lat};{lon},{lat}`
 
-3. **RouteSegment** - участок маршрута между двумя точками:
-   - `startPlaceId`, `endPlaceId` - ID начальной и конечной точки
-   - `distance` - расстояние в км
-   - `duration` - время в минутах
-   - `transportMode` - способ передвижения
-   - `instructions` - пошаговые инструкции навигации
-   - `polyline` - координаты сегмента
+Основные функции:
+- `getWalkingRoute(from, to)` - построение пешеходного маршрута между двумя точками
+  - Возвращает: coordinates (декодированный polyline), distance (метры), duration (секунды), instructions
+  - Использует Google Polyline Algorithm для декодирования геометрии
+  - Fallback на прямую линию если API недоступен
 
-4. **ActiveRoute** - активный маршрут пользователя:
-   - `currentPlaceIndex` - текущая точка маршрута
-   - `visitedPlaces` - посещенные места (ID)
-   - `progress` - прогресс 0-100%
+- `getMultiPointWalkingRoute(points[])` - построение маршрута через несколько точек
+  - Вызывает getWalkingRoute для каждой пары точек последовательно
+  - Задержка 500ms между запросами для уважения к бесплатному API
+
+- `combineRoutes(routes[])` - объединение сегментов в единую линию
+  - Возвращает: coordinates[], totalDistance, totalDuration
+
+Декодирование polyline:
+- OSRM возвращает геометрию в формате Google Polyline (encoded string)
+- `decodePolyline(encoded)` декодирует в массив [lon, lat] координат
+- Алгоритм: variable-length encoding с base-63 ASCII символами
    - `startedAt`, `completedAt` - временные метки
 
 Основные функции:
@@ -175,6 +186,15 @@ Gemini генерирует JSON с:
 - Статистикой (время, расстояние, стоимость, калории)
 - Персонализацией (score, reasoning)
 
+**Координатная валидация (КРИТИЧНО):**
+- Все координаты от Gemini валидируются через OSM Nominatim API
+- `validateRouteCoordinates()` в `src/lib/coordinatesValidator.ts`
+- Для каждого места: поиск по названию + город в OSM
+- **Координаты ВСЕГДА заменяются на OSM координаты** (точнее чем от AI)
+- Rate limit: 1 запрос в 1.1 секунду (требование OSM)
+- Reverse geocoding для определения города по координатам
+- Логирование всех исправлений координат
+
 ## Important Notes
 
 ### Package Manager
@@ -212,12 +232,20 @@ Gemini генерирует JSON с:
 - Анимации: `animate-slide-up` для bottomsheets
 - Скроллинг: учитывать fixed элементы (pb-32 для footer)
 
-### Leaflet/Map Development
-- Leaflet требует динамического импорта с `ssr: false`
-- Карта инициализируется один раз в useEffect с cleanup
-- Маркеры обновляются через refs для избежания пересоздания карты
-- Используй L.divIcon для кастомных emoji маркеров
+### 2GIS MapGL Development
+- **ВСЕГДА используй 2GIS MapGL** через `@2gis/mapgl` (не Leaflet, не MapLibre!)
+- **Импорт:** `import { load } from '@2gis/mapgl'` + `import type { Map, HtmlMarker, Polyline } from '@2gis/mapgl/types'`
+- Карты требуют динамического импорта с `ssr: false`
+- **API ключ обязателен:** `NEXT_PUBLIC_2GIS_API_KEY` из `.env`
+- Инициализация через `load()` промис
+- Координаты в формате [longitude, latitude] (обратный порядок от обычного!)
+- **HtmlMarker** для кастомных маркеров с HTML элементами
+- **Marker** для базовых маркеров (поддерживает draggable через `as any`)
+- **Polyline** для линий маршрутов
+- Управление картой: `map.setCenter()`, `map.setZoom()`, `map.on('click')`
+- Уничтожение: всегда `map.destroy()` и `marker.destroy()` в cleanup
 - Z-index: карта = 0, UI элементы > 10, bottomsheet = 20
+- TypeScript типы могут быть неполными - используй `as any` где необходимо
 
 ### State Management
 - Для локального состояния используй `useState`/`useReducer`
